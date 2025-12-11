@@ -1,12 +1,16 @@
-using Microsoft.EntityFrameworkCore;
 using Eyebek.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace Eyebek.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) {}
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
+    {
+    }
 
+    // DbSets (tablas)
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Plan> Plans => Set<Plan>();
@@ -18,18 +22,67 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        
 
-        modelBuilder.Entity<Company>().HasIndex(x => x.Email).IsUnique();
-        modelBuilder.Entity<User>().HasIndex(x => new { x.CompanyId, x.Email }).IsUnique();
+        // Email único por empresa
+        modelBuilder.Entity<Company>()
+            .HasIndex(x => x.Email)
+            .IsUnique();
 
-        modelBuilder.Entity<Company>().Property(x => x.Status).HasConversion<string>();
-        modelBuilder.Entity<User>().Property(x => x.Role).HasConversion<string>();
-        modelBuilder.Entity<User>().Property(x => x.Status).HasConversion<string>();
+        
+        modelBuilder.Entity<User>()
+            .HasIndex(x => new { x.CompanyId, x.Email })
+            .IsUnique();
 
-        modelBuilder.Entity<Payment>().Property(x => x.PaymentMethod).HasConversion<string>();
-        modelBuilder.Entity<Payment>().Property(x => x.PaymentStatus).HasConversion<string>();
+       
+        modelBuilder.Entity<Company>()
+            .Property(x => x.Status)
+            .HasConversion<string>();
 
-        modelBuilder.Entity<Attendance>().Property(x => x.Type).HasConversion<string>();
-        modelBuilder.Entity<Attendance>().Property(x => x.Method).HasConversion<string>();
+        modelBuilder.Entity<User>()
+            .Property(x => x.Role)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<User>()
+            .Property(x => x.Status)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Payment>()
+            .Property(x => x.PaymentMethod)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Payment>()
+            .Property(x => x.PaymentStatus)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Attendance>()
+            .Property(x => x.Type)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Attendance>()
+            .Property(x => x.Method)
+            .HasConversion<string>();
+        
+
+        modelBuilder.Entity<Company>()
+            .ToTable("companies");
+
+        modelBuilder.Entity<User>()
+            .ToTable("users");
+
+        modelBuilder.Entity<Plan>()
+            .ToTable("plans");        
+
+        modelBuilder.Entity<Payment>()
+            .ToTable("payments");
+
+        modelBuilder.Entity<Attendance>()
+            .ToTable("attendance");    
+
+        modelBuilder.Entity<Session>()
+            .ToTable("sessions");
+
+        modelBuilder.Entity<Audit>()
+            .ToTable("audit");
     }
-}   
+}

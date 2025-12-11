@@ -1,5 +1,8 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace Eyebek.Domain.Entities;
 
+[Table("plans")] 
 public class Plan
 {
     public int Id { get; set; }
