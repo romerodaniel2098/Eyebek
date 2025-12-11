@@ -17,7 +17,6 @@ public class AppDbContext : DbContext
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<Session> Sessions => Set<Session>();
-    public DbSet<Audit> Audits => Set<Audit>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

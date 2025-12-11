@@ -1,43 +1,62 @@
-using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Eyebek.Domain.Entities;
 using Eyebek.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Eyebek.Infrastructure.Seed;
 
 public static class PlanSeeder
 {
-    public static void Seed(AppDbContext context)
+    public static async Task SeedAsync(AppDbContext db, ILogger logger)
     {
-        // Si ya hay planes, no hacemos nada
-        if (context.Plans.Any())
-            return;
-
-        var plans = new List<Plan>
+        try
         {
-            new Plan
-            {
-                Category = "Basic",
-                Price = 30000,
-                Description = "Plan básico para equipos pequeños (hasta 5 usuarios).",
-                UserCapacity = 5
-            },
-            new Plan
-            {
-                Category = "Pro",
-                Price = 80000,
-                Description = "Plan Pro para pymes (hasta 20 usuarios).",
-                UserCapacity = 20
-            },
-            new Plan
-            {
-                Category = "Enterprise",
-                Price = 150000,
-                Description = "Plan Enterprise para empresas grandes (hasta 50 usuarios).",
-                UserCapacity = 50
-            }
-        };
+            // Si ya hay planes, no hacemos nada
+            if (await db.Plans.AnyAsync())
+                return;
 
-        context.Plans.AddRange(plans);
-        context.SaveChanges();
+            var plans = new List<Plan>
+            {
+                new()
+                {
+                    Category = "Free",
+                    Price = 0m,
+                    Duration = 30,
+                    Description = "Plan gratuito para probar Eyebek.",
+                    UserCapacity = 5,
+                    Features = "Registros básicos de asistencia",
+                    Active = true
+                },
+                new()
+                {
+                    Category = "Pro",
+                    Price = 29m,
+                    Duration = 30,
+                    Description = "Plan para pequeñas empresas.",
+                    UserCapacity = 25,
+                    Features = "Más usuarios, exportaciones y reportes.",
+                    Active = true
+                },
+                new()
+                {
+                    Category = "Enterprise",
+                    Price = 99m,
+                    Duration = 30,
+                    Description = "Plan para empresas grandes.",
+                    UserCapacity = 100,
+                    Features = "Todas las funcionalidades + soporte prioritario.",
+                    Active = true
+                }
+            };
+
+            db.Plans.AddRange(plans);
+            await db.SaveChangesAsync();
+        }
+        catch (System.Exception ex)
+        {
+            logger.LogError(ex, "Error al hacer seed de planes");
+        }
     }
 }

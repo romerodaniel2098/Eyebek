@@ -88,17 +88,18 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Crear esquema de BD y seed de planes (sin matar la app si falla)
+//
+// 🔹 Inicializar BD y hacer seed de planes
+//
 try
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    var logger = loggerFactory.CreateLogger("DbInitializer");
 
-    // Como no tenemos migraciones, usamos EnsureCreated para crear las tablas
-    db.Database.EnsureCreated();
-
-    // Seed de planes solo si la tabla existe y está vacía
-    PlanSeeder.Seed(db);
+    // Esto asume que tienes DatabaseInitializer y PlanSeeder con métodos async
+    await DatabaseInitializer.InitializeAsync(db, logger);
 }
 catch (Exception ex)
 {
@@ -109,7 +110,6 @@ catch (Exception ex)
         Console.WriteLine(ex.InnerException.Message);
     }
 }
-
 
 // Swagger siempre habilitado (para pruebas)
 app.UseSwagger();
