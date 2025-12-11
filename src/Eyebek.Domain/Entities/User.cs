@@ -16,7 +16,7 @@ public class User
     public string? Photo { get; set; }
 
     public UserRole Role { get; set; } = UserRole.Employee;
-    public UserStatus Status { get; set; } = UserStatus.Activo;
+    public UserStatus Status { get; set; } = UserStatus.Active;
     
     public string? FacialEmbedding { get; set; }
 

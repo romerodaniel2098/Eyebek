@@ -1,14 +1,19 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace Eyebek.Api.Helpers;
 
 public static class HttpContextExtensions
 {
-    public static int GetCompanyId(this HttpContext httpContext)
+    public static int? GetCompanyId(this HttpContext context)
     {
-        var value = httpContext.User.FindFirstValue("companyId");
-        if (string.IsNullOrWhiteSpace(value))
-            throw new Exception("Token sin companyId.");
-        return int.Parse(value);
+        var claim = context.User.FindFirst("companyId");
+        if (claim == null)
+            return null;
+
+        if (int.TryParse(claim.Value, out var id))
+            return id;
+
+        return null;
     }
 }

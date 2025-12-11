@@ -1,3 +1,4 @@
+using System.Linq;
 using Eyebek.Domain.Entities;
 using Eyebek.Infrastructure.Persistence;
 
@@ -5,40 +6,38 @@ namespace Eyebek.Infrastructure.Seed;
 
 public static class PlanSeeder
 {
-    public static async Task SeedAsync(AppDbContext db)
+    public static void Seed(AppDbContext context)
     {
-        if (db.Plans.Any()) return;
+        // Si ya hay planes, no hacemos nada
+        if (context.Plans.Any())
+            return;
 
-        db.Plans.AddRange(
+        var plans = new List<Plan>
+        {
             new Plan
             {
                 Category = "Basic",
                 Price = 30000,
-                Duration = 30,
-                Description = "Plan básico para equipos pequeños",
-                UserCapacity = 5,
-                Active = true
+                Description = "Plan básico para equipos pequeños (hasta 5 usuarios).",
+                UserCapacity = 5
             },
             new Plan
             {
                 Category = "Pro",
-                Price = 70000,
-                Duration = 30,
-                Description = "Plan profesional con mayor capacidad",
-                UserCapacity = 25,
-                Active = true
+                Price = 80000,
+                Description = "Plan Pro para pymes (hasta 20 usuarios).",
+                UserCapacity = 20
             },
             new Plan
             {
                 Category = "Enterprise",
                 Price = 150000,
-                Duration = 30,
-                Description = "Plan empresarial",
-                UserCapacity = 200,
-                Active = true
+                Description = "Plan Enterprise para empresas grandes (hasta 50 usuarios).",
+                UserCapacity = 50
             }
-        );
+        };
 
-        await db.SaveChangesAsync();
+        context.Plans.AddRange(plans);
+        context.SaveChanges();
     }
 }

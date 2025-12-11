@@ -1,6 +1,8 @@
 using System.Security.Claims;
 using Eyebek.Application.Interfaces;
 using Eyebek.Domain.Entities;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 
 namespace Eyebek.Api.Middleware;
 
@@ -15,28 +17,47 @@ public class AuditMiddleware
 
     public async Task InvokeAsync(HttpContext context, IAuditRepository audits)
     {
+        // Dejamos pasar la petición primero
         await _next(context);
-        
-        var companyIdClaim = context.User.FindFirst("companyId");
-        if (companyIdClaim is null) return;
-
-        var companyId = int.Parse(companyIdClaim.Value);
-
-        var audit = new Audit
-        {
-            CompanyId = companyId,
-            Action = context.Request.Method,
-            Entity = context.Request.Path.Value ?? "unknown",
-            Description = "Request audit",
-            IpAddress = context.Connection.RemoteIpAddress?.ToString(),
-            UserAgent = context.Request.Headers.UserAgent.ToString(),
-            CreatedAt = DateTime.UtcNow
-        };
 
         try
         {
+            // Sacar companyId del token, si existe
+            var companyIdClaim = context.User.FindFirst("companyId");
+            if (companyIdClaim == null)
+                return;
+
+            if (!int.TryParse(companyIdClaim.Value, out var companyId))
+                return;
+
+            var ip = context.Connection.RemoteIpAddress?.ToString();
+            var userAgent = context.Request.Headers.UserAgent.ToString();
+            var path = context.Request.Path.ToString();
+            var method = context.Request.Method;
+
+            var audit = new Audit
+            {
+                CompanyId = companyId,
+                Action = method,
+                Entity = path,
+                IpAddress = ip,
+                UserAgent = userAgent,
+                CreatedAt = DateTime.UtcNow
+            };
+
             await audits.AddAsync(audit);
         }
         catch
+        {
+            // No rompemos la petición si falla la auditoría
+        }
+    }
+}
+
+public static class AuditMiddlewareExtensions
+{
+    public static IApplicationBuilder UseAuditMiddleware(this IApplicationBuilder app)
+    {
+        return app.UseMiddleware<AuditMiddleware>();
     }
 }

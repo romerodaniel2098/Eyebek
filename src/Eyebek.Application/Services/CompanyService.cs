@@ -1,4 +1,3 @@
-using BCrypt.Net;
 using Eyebek.Application.DTOs.Companies;
 using Eyebek.Application.Interfaces;
 using Eyebek.Application.Services.Interfaces;
@@ -13,7 +12,10 @@ public class CompanyService : ICompanyService
     private readonly ISessionRepository _sessions;
     private readonly IJwtTokenGenerator _jwt;
 
-    public CompanyService(ICompanyRepository companies, ISessionRepository sessions, IJwtTokenGenerator jwt)
+    public CompanyService(
+        ICompanyRepository companies,
+        ISessionRepository sessions,
+        IJwtTokenGenerator jwt)
     {
         _companies = companies;
         _sessions = sessions;
@@ -22,8 +24,10 @@ public class CompanyService : ICompanyService
 
     public async Task<CompanyMeResponse> RegisterAsync(CompanyRegisterRequest request)
     {
+        // Validar si ya existe una empresa con ese email
         var existing = await _companies.GetByEmailAsync(request.Email);
-        if (existing != null) throw new Exception("El email ya está registrado.");
+        if (existing != null)
+            throw new Exception("El email ya está registrado.");
 
         var company = new Company
         {
@@ -31,36 +35,44 @@ public class CompanyService : ICompanyService
             Phone = request.Phone,
             Email = request.Email,
             Address = request.Address,
+            // Hasheamos la contraseña con BCrypt
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             Status = CompanyStatus.SinPlan,
             CurrentUsers = 0
         };
 
         await _companies.AddAsync(company);
+
         return MapMe(company);
     }
 
     public async Task<(string token, CompanyMeResponse company)> LoginAsync(
-        CompanyLoginRequest request, string? ip, string? userAgent)
+        CompanyLoginRequest request,
+        string? ip,
+        string? userAgent)
     {
         var company = await _companies.GetByEmailAsync(request.Email)
             ?? throw new Exception("Credenciales inválidas.");
 
+        // Verificar contraseña
         var ok = BCrypt.Net.BCrypt.Verify(request.Password, company.PasswordHash);
-        if (!ok) throw new Exception("Credenciales inválidas.");
+        if (!ok)
+            throw new Exception("Credenciales inválidas.");
 
-        // Expira plan automáticamente
+        // Expira plan automáticamente si ya pasó la fecha
         if (company.PlanEndDate.HasValue && company.PlanEndDate.Value < DateTime.UtcNow)
         {
             company.Status = CompanyStatus.Vencido;
             await _companies.UpdateAsync(company);
         }
 
-        // Opcional: desactivar sesiones previas para mantener 1 activa
+        // Desactivar sesiones previas para mantener solo una activa (opcional)
         await _sessions.DeactivateCompanySessionsAsync(company.Id);
 
+        // Generar token JWT
         var token = _jwt.GenerateCompanyToken(company);
 
+        // Registrar sesión
         var session = new Session
         {
             CompanyId = company.Id,
@@ -99,7 +111,7 @@ public class CompanyService : ICompanyService
         return MapMe(company);
     }
 
-    private static CompanyMeResponse MapMe(Company c) => new()
+    private static CompanyMeResponse MapMe(Company c) => new CompanyMeResponse
     {
         Id = c.Id,
         Name = c.Name,

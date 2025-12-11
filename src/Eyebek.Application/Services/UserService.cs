@@ -38,7 +38,7 @@ public class UserService : IUserService
             Email = request.Email,
             Phone = request.Phone,
             Role = request.Role,
-            Status = UserStatus.Activo
+            Status = UserStatus.Active
         };
 
         await _users.AddAsync(user);

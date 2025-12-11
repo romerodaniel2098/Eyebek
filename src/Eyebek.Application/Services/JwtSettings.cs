@@ -2,8 +2,8 @@ namespace Eyebek.Application.Services;
 
 public class JwtSettings
 {
-    public string Key { get; set; } = default!;
-    public string Issuer { get; set; } = default!;
-    public string Audience { get; set; } = default!;
+    public string Key { get; set; } = string.Empty;
+    public string Issuer { get; set; } = string.Empty;
+    public string Audience { get; set; } = string.Empty;
     public int ExpMinutes { get; set; } = 120;
 }

@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Eyebek.Api.Helpers;
 using Eyebek.Application.DTOs.Companies;
 using Eyebek.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Eyebek.Api.Controllers;
 
@@ -10,49 +10,70 @@ namespace Eyebek.Api.Controllers;
 [Route("companies")]
 public class CompaniesController : ControllerBase
 {
-    private readonly ICompanyService _service;
+    private readonly ICompanyService _companyService;
 
-    public CompaniesController(ICompanyService service)
+    public CompaniesController(ICompanyService companyService)
     {
-        _service = service;
+        _companyService = companyService;
     }
 
-    // 1) Register company => sin_plan
+    /// <summary>
+    /// Registro de empresa (sin plan).
+    /// </summary>
     [HttpPost("register")]
-    public async Task<ActionResult<CompanyMeResponse>> Register(CompanyRegisterRequest request)
+    [AllowAnonymous]
+    public async Task<IActionResult> Register([FromBody] CompanyRegisterRequest request)
     {
-        var result = await _service.RegisterAsync(request);
-        return Ok(result);
+        var company = await _companyService.RegisterAsync(request);
+        return Ok(company);
     }
 
-    // 2) Login company => crea session + token
+    /// <summary>
+    /// Login de empresa. Devuelve token JWT y datos básicos.
+    /// </summary>
     [HttpPost("login")]
-    public async Task<ActionResult> Login(CompanyLoginRequest request)
+    [AllowAnonymous]
+    public async Task<IActionResult> Login([FromBody] CompanyLoginRequest request)
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var ua = Request.Headers.UserAgent.ToString();
+        var userAgent = Request.Headers.UserAgent.ToString();
 
-        var (token, company) = await _service.LoginAsync(request, ip, ua);
-        return Ok(new { token, company });
+        var (token, company) = await _companyService.LoginAsync(request, ip, userAgent);
+
+        return Ok(new
+        {
+            token,
+            company
+        });
     }
 
-    // GET perfil empresa autenticada
-    [Authorize]
+    /// <summary>
+    /// Datos de la empresa autenticada.
+    /// </summary>
     [HttpGet("me")]
-    public async Task<ActionResult<CompanyMeResponse>> Me()
+    [Authorize]
+    public async Task<IActionResult> Me()
     {
         var companyId = HttpContext.GetCompanyId();
-        var result = await _service.GetMeAsync(companyId);
-        return Ok(result);
+        if (companyId == null)
+            return Unauthorized("No se encontró la empresa en el token.");
+
+        var company = await _companyService.GetMeAsync(companyId.Value);
+        return Ok(company);
     }
 
-    // CRUD Update básico de empresa (perfil)
-    [Authorize]
+    /// <summary>
+    /// Actualizar datos básicos de la empresa autenticada.
+    /// </summary>
     [HttpPut("me")]
-    public async Task<ActionResult<CompanyMeResponse>> UpdateMe(CompanyUpdateRequest request)
+    [Authorize]
+    public async Task<IActionResult> UpdateMe([FromBody] CompanyUpdateRequest request)
     {
         var companyId = HttpContext.GetCompanyId();
-        var result = await _service.UpdateMeAsync(companyId, request);
-        return Ok(result);
+        if (companyId == null)
+            return Unauthorized("No se encontró la empresa en el token.");
+
+        var company = await _companyService.UpdateMeAsync(companyId.Value, request);
+        return Ok(company);
     }
 }

@@ -1,6 +1,7 @@
 namespace Eyebek.Domain.Enums;
 
-public class UserStatus
+public enum UserStatus
 {
-    
+    Active = 1,
+    Inactive = 2
 }

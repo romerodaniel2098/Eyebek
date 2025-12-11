@@ -1,8 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Eyebek.Api.Helpers;
 using Eyebek.Application.DTOs.Users;
 using Eyebek.Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Eyebek.Api.Controllers;
 
@@ -11,23 +11,48 @@ namespace Eyebek.Api.Controllers;
 [Authorize]
 public class UsersController : ControllerBase
 {
-    private readonly IUserService _service;
-    public UsersController(IUserService service) => _service = service;
+    private readonly IUserService _userService;
 
-    // 5) Agregar usuarios hasta el límite del plan
-    [HttpPost]
-    public async Task<ActionResult<UserListItemDto>> Create(UserCreateRequest request)
+    public UsersController(IUserService userService)
     {
-        var companyId = HttpContext.GetCompanyId();
-        var result = await _service.CreateAsync(companyId, request);
-        return Ok(result);
+        _userService = userService;
     }
-
-    [HttpGet]
-    public async Task<ActionResult<List<UserListItemDto>>> Get()
+    
+    [HttpPost]
+    public async Task<IActionResult> Create([FromBody] UserCreateRequest request)
     {
         var companyId = HttpContext.GetCompanyId();
-        var result = await _service.GetByCompanyAsync(companyId);
-        return Ok(result);
+        if (companyId == null)
+            return Unauthorized("No se encontró la empresa en el token.");
+
+       
+        await Task.CompletedTask;
+
+        return Ok(new
+        {
+            message = "Usuario creado (implementación de servicio pendiente).",
+            companyId = companyId.Value,
+            user = request
+        });
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var companyId = HttpContext.GetCompanyId();
+        if (companyId == null)
+            return Unauthorized("No se encontró la empresa en el token.");
+
+        
+        await Task.CompletedTask;
+
+        var emptyList = new List<object>();
+
+        return Ok(new
+        {
+            message = "Listado de usuarios (implementación de servicio pendiente).",
+            companyId = companyId.Value,
+            users = emptyList
+        });
     }
 }
