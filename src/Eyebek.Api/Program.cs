@@ -88,13 +88,27 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Migrar BD y seed de planes
-using (var scope = app.Services.CreateScope())
+// Migrar BD y seed de planes (sin matar la app si falla)
+try
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    PlanSeeder.Seed(db);
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
+        PlanSeeder.Seed(db);
+    }
 }
+catch (Exception ex)
+{
+    Console.WriteLine("⚠️ Error al aplicar migraciones o seed de planes:");
+    Console.WriteLine(ex.Message);
+    if (ex.InnerException != null)
+    {
+        Console.WriteLine(ex.InnerException.Message);
+    }
+    // No lanzamos de nuevo la excepción: la app sigue corriendo
+}
+
 
 // Swagger siempre habilitado (para pruebas)
 app.UseSwagger();
