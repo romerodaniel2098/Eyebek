@@ -1,7 +1,6 @@
 using System.Text;
 using Eyebek.Api.Middleware;
 using Eyebek.Api.Services;
-using Eyebek.Application.Interfaces;
 using Eyebek.Application.Services;
 using Eyebek.Application.Services.Interfaces;
 using Eyebek.Infrastructure.Persistence;
@@ -31,7 +30,6 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-builder.Services.AddScoped<IAuditRepository, AuditRepository>();
 
 // Servicios de aplicación (Application)
 builder.Services.AddScoped<ICompanyService, CompanyService>();
@@ -119,9 +117,6 @@ app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-// Middleware de auditoría
-app.UseAuditMiddleware();
 
 app.MapControllers();
 
