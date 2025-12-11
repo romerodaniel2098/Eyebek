@@ -19,7 +19,7 @@ public class AttendanceController : ControllerBase
     public async Task<IActionResult> Register(AttendanceCreateRequest request)
     {
         var companyId = HttpContext.GetCompanyId();
-        await _service.RegisterAsync(companyId, request);
+        await _service.RegisterAsync(companyId, request;
         return Ok(new { message = "Asistencia registrada." });
     }
 }
