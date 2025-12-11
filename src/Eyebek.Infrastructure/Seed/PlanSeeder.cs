@@ -1,62 +1,80 @@
-using System.Collections.Generic;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Eyebek.Domain.Entities;
 using Eyebek.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Eyebek.Infrastructure.Seed;
 
 public static class PlanSeeder
 {
-    public static async Task SeedAsync(AppDbContext db, ILogger logger)
+    // Versión síncrona (la usa Program.cs)
+    public static void Seed(AppDbContext context)
     {
-        try
-        {
-            // Si ya hay planes, no hacemos nada
-            if (await db.Plans.AnyAsync())
-                return;
+        // Si no se puede conectar, no hacemos nada
+        if (!context.Database.CanConnect())
+            return;
 
-            var plans = new List<Plan>
+        // Si ya hay planes, no sembramos de nuevo
+        if (context.Plans.Any())
+            return;
+
+        var now = DateTime.UtcNow;
+
+        var plans = new[]
+        {
+            new Plan
             {
-                new()
-                {
-                    Category = "Free",
-                    Price = 0m,
-                    Duration = 30,
-                    Description = "Plan gratuito para probar Eyebek.",
-                    UserCapacity = 5,
-                    Features = "Registros básicos de asistencia",
-                    Active = true
-                },
-                new()
-                {
-                    Category = "Pro",
-                    Price = 29m,
-                    Duration = 30,
-                    Description = "Plan para pequeñas empresas.",
-                    UserCapacity = 25,
-                    Features = "Más usuarios, exportaciones y reportes.",
-                    Active = true
-                },
-                new()
-                {
-                    Category = "Enterprise",
-                    Price = 99m,
-                    Duration = 30,
-                    Description = "Plan para empresas grandes.",
-                    UserCapacity = 100,
-                    Features = "Todas las funcionalidades + soporte prioritario.",
-                    Active = true
-                }
-            };
+                Category = "BÁSICO",
+                Price = 0m,
+                Duration = 30,
+                Description = "Plan básico gratuito para pequeños equipos",
+                UserCapacity = 5,
+                Features = "Registro de asistencia, control de sesiones básicas",
+                Active = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Plan
+            {
+                Category = "PRO",
+                Price = 49_900m,
+                Duration = 30,
+                Description = "Plan PRO para empresas en crecimiento",
+                UserCapacity = 50,
+                Features = "Reportes avanzados, soporte prioritario",
+                Active = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Plan
+            {
+                Category = "ENTERPRISE",
+                Price = 199_900m,
+                Duration = 30,
+                Description = "Plan Enterprise para grandes compañías",
+                UserCapacity = 500,
+                Features = "Funciones avanzadas, integraciones externas",
+                Active = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
 
-            db.Plans.AddRange(plans);
-            await db.SaveChangesAsync();
-        }
-        catch (System.Exception ex)
-        {
-            logger.LogError(ex, "Error al hacer seed de planes");
-        }
+        context.Plans.AddRange(plans);
+        context.SaveChanges();
+    }
+
+    // Versión asíncrona simple (1 parámetro)
+    public static Task SeedAsync(AppDbContext context)
+    {
+        Seed(context);
+        return Task.CompletedTask;
+    }
+    
+    public static Task SeedAsync(AppDbContext context, object? _)
+    {
+        Seed(context);
+        return Task.CompletedTask;
     }
 }

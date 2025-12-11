@@ -1,6 +1,6 @@
 using System.Text;
-using Eyebek.Api.Middleware;
 using Eyebek.Api.Services;
+using Eyebek.Application.Interfaces;
 using Eyebek.Application.Services;
 using Eyebek.Application.Services.Interfaces;
 using Eyebek.Infrastructure.Persistence;
@@ -30,6 +30,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+// 👇 OJO: ya no hay auditorías, así que no registramos IAuditRepository
 
 // Servicios de aplicación (Application)
 builder.Services.AddScoped<ICompanyService, CompanyService>();
@@ -86,18 +87,17 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-//
-// 🔹 Inicializar BD y hacer seed de planes
-//
+// Crear esquema de BD y seed de planes (sin tumbar la app si falla)
 try
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
-    var logger = loggerFactory.CreateLogger("DbInitializer");
 
-    // Esto asume que tienes DatabaseInitializer y PlanSeeder con métodos async
-    await DatabaseInitializer.InitializeAsync(db, logger);
+    // Si no hay tablas, las crea basadas en el modelo
+    db.Database.EnsureCreated();
+
+    // Seed de planes solo si la tabla existe y está vacía
+    PlanSeeder.Seed(db);
 }
 catch (Exception ex)
 {
@@ -117,6 +117,9 @@ app.UseCors("FrontendPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// 👇 Ya NO usamos middleware de auditoría
+// app.UseAuditMiddleware();
 
 app.MapControllers();
 

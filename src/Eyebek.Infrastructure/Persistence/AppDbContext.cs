@@ -5,9 +5,11 @@ namespace Eyebek.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
 
-    // DbSets alineados con las tablas de la BD
+    // Tablas reales que tenemos en la BD
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Plan> Plans => Set<Plan>();
@@ -15,35 +17,61 @@ public class AppDbContext : DbContext
     public DbSet<Attendance> Attendances => Set<Attendance>();
     public DbSet<Session> Sessions => Set<Session>();
 
-    // 🔹 Necesario para que compile AuditRepository
-    // (aunque en la BD real no exista la tabla audits)
-    public DbSet<Audit> Audits => Set<Audit>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Usamos nombres de tabla en minúscula como en la BD
-        modelBuilder.Entity<Company>().ToTable("companies");
-        modelBuilder.Entity<User>().ToTable("users");
-        modelBuilder.Entity<Plan>().ToTable("plans");
-        modelBuilder.Entity<Payment>().ToTable("payments");
-        modelBuilder.Entity<Attendance>().ToTable("attendance");
-        modelBuilder.Entity<Session>().ToTable("sessions");
+        // companies
+        modelBuilder.Entity<Company>(entity =>
+        {
+            entity.ToTable("companies");
+            entity.HasKey(x => x.Id);
+            entity.HasIndex(x => x.Email).IsUnique();
+            entity.Property(x => x.Status).HasConversion<string>();
+        });
 
-        // Índices
-        modelBuilder.Entity<Company>().HasIndex(x => x.Email).IsUnique();
-        modelBuilder.Entity<User>().HasIndex(x => new { x.CompanyId, x.Email }).IsUnique();
+        // users
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.ToTable("users");
+            entity.HasKey(x => x.Id);
 
-        // Enums como string
-        modelBuilder.Entity<Company>().Property(x => x.Status).HasConversion<string>();
-        modelBuilder.Entity<User>().Property(x => x.Role).HasConversion<string>();
-        modelBuilder.Entity<User>().Property(x => x.Status).HasConversion<string>();
+            entity.HasIndex(x => new { x.CompanyId, x.Email }).IsUnique();
 
-        modelBuilder.Entity<Payment>().Property(x => x.PaymentMethod).HasConversion<string>();
-        modelBuilder.Entity<Payment>().Property(x => x.PaymentStatus).HasConversion<string>();
+            entity.Property(x => x.Role).HasConversion<string>();
+            entity.Property(x => x.Status).HasConversion<string>();
+        });
 
-        modelBuilder.Entity<Attendance>().Property(x => x.Type).HasConversion<string>();
-        modelBuilder.Entity<Attendance>().Property(x => x.Method).HasConversion<string>();
+        // plans
+        modelBuilder.Entity<Plan>(entity =>
+        {
+            entity.ToTable("plans");
+            entity.HasKey(x => x.Id);
+        });
+
+        // payments
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.ToTable("payments");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.PaymentMethod).HasConversion<string>();
+            entity.Property(x => x.PaymentStatus).HasConversion<string>();
+        });
+
+        // attendance
+        modelBuilder.Entity<Attendance>(entity =>
+        {
+            entity.ToTable("attendance");
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Type).HasConversion<string>();
+            entity.Property(x => x.Method).HasConversion<string>();
+        });
+
+        // sessions
+        modelBuilder.Entity<Session>(entity =>
+        {
+            entity.ToTable("sessions");
+            entity.HasKey(x => x.Id);
+        });
     }
 }
