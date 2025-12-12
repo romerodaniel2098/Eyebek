@@ -9,15 +9,45 @@ using Eyebek.Infrastructure.Seed;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models; // 👈 IMPORTANTE para Swagger
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
 builder.Services.AddControllers();
 
-// Swagger
+// Swagger + esquema de seguridad JWT
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Eyebek API",
+        Version = "v1"
+    });
+
+    var securityScheme = new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Description = "Introduce tu JWT con el formato: Bearer {token}",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Reference = new OpenApiReference
+        {
+            Type = ReferenceType.SecurityScheme,
+            Id = "Bearer"
+        }
+    };
+
+    c.AddSecurityDefinition("Bearer", securityScheme);
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        { securityScheme, Array.Empty<string>() }
+    });
+});
 
 // DbContext (PostgreSQL)
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -30,7 +60,7 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IAttendanceRepository, AttendanceRepository>();
 builder.Services.AddScoped<ISessionRepository, SessionRepository>();
-// 👇 OJO: ya no hay auditorías, así que no registramos IAuditRepository
+// 👇 Ya no registramos IAuditRepository porque no hay auditorías
 
 // Servicios de aplicación (Application)
 builder.Services.AddScoped<ICompanyService, CompanyService>();
@@ -93,11 +123,10 @@ try
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-    // Si no hay tablas, las crea basadas en el modelo
-    // Usamos Migrate() para aplicar migraciones pendientes (mucho más seguro en producción)
+    // Aplica migraciones pendientes
     db.Database.Migrate();
 
-    // Seed de planes solo si la tabla existe y está vacía
+    // Seed de planes
     PlanSeeder.Seed(db);
 }
 catch (Exception ex)
@@ -110,7 +139,7 @@ catch (Exception ex)
     }
 }
 
-// Swagger siempre habilitado (para pruebas)
+// Middleware
 app.UseSwagger();
 app.UseSwaggerUI();
 
@@ -119,7 +148,7 @@ app.UseCors("FrontendPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// 👇 Ya NO usamos middleware de auditoría
+// Ya NO usamos middleware de auditoría
 // app.UseAuditMiddleware();
 
 app.MapControllers();
