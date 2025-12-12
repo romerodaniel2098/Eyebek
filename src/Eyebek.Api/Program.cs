@@ -94,7 +94,8 @@ try
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     // Si no hay tablas, las crea basadas en el modelo
-    db.Database.EnsureCreated();
+    // Usamos Migrate() para aplicar migraciones pendientes (mucho más seguro en producción)
+    db.Database.Migrate();
 
     // Seed de planes solo si la tabla existe y está vacía
     PlanSeeder.Seed(db);

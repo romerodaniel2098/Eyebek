@@ -14,10 +14,22 @@ public static class PlanSeeder
         // Si no se puede conectar, no hacemos nada
         if (!context.Database.CanConnect())
             return;
-
-        // Si ya hay planes, no sembramos de nuevo
-        if (context.Plans.Any())
+        
+        // Ensure database is created (just in case, though Migrate should handle it)
+        // Check safely if plans exist
+        try 
+        {
+            if (context.Plans.Any())
+                return;
+        }
+        catch 
+        {
+            // If table doesn't exist despite migration, we shouldn't crash, 
+            // but normally Migrate() above should have created it.
             return;
+        }
+
+        // (Removed redundant check)
 
         var now = DateTime.UtcNow;
 
