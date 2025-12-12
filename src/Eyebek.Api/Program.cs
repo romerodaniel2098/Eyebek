@@ -122,16 +122,22 @@ try
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    // Obtener un logger para pasar al seeder
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
     // Aplica migraciones pendientes
     db.Database.Migrate();
 
     // Seed de planes
     PlanSeeder.Seed(db);
+    
+    // Seed de SuperAdmin (Async)
+    await SuperAdminSeeder.SeedAsync(db, logger);
 }
 catch (Exception ex)
 {
-    Console.WriteLine(" Error al preparar la base de datos o seed de planes:");
+    // Simple console log backup, though logger is better if available
+    Console.WriteLine(" Error al preparar la base de datos o seed de planes/superadmin:");
     Console.WriteLine(ex.Message);
     if (ex.InnerException != null)
     {

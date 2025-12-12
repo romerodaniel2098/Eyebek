@@ -17,10 +17,13 @@ public static class DatabaseInitializer
 
             // 2. Seed de planes (solo si la tabla está vacía)
             await PlanSeeder.SeedAsync(db, logger);
+
+            // 3. Seed de SuperAdmin (quemado)
+            await SuperAdminSeeder.SeedAsync(db, logger);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error al preparar la base de datos o seed de planes");
+            logger.LogError(ex, "Error al preparar la base de datos o seed de planes/superadmin");
         }
     }
 }

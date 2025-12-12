@@ -7,5 +7,6 @@ public interface ICompanyService
     Task<CompanyMeResponse> RegisterAsync(CompanyRegisterRequest request);
     Task<(string token, CompanyMeResponse company)> LoginAsync(CompanyLoginRequest request, string? ip, string? userAgent);
     Task<CompanyMeResponse> GetMeAsync(int companyId);
+    Task<CompanyMeResponse> GetSuperAdminAsync(); 
     Task<CompanyMeResponse> UpdateMeAsync(int companyId, CompanyUpdateRequest request);
 }

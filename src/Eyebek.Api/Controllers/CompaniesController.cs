@@ -50,13 +50,21 @@ public class CompaniesController : ControllerBase
     /// <summary>
     /// Datos de la empresa autenticada.
     /// </summary>
+    /// <summary>
+    /// Datos de la empresa autenticada (o SuperAdmin por defecto si no hay token).
+    /// </summary>
     [HttpGet("me")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> Me()
     {
         var companyId = HttpContext.GetCompanyId();
+        
         if (companyId == null)
-            return Unauthorized("No se encontró la empresa en el token.");
+        {
+            // Fallback: SuperAdmin por defecto
+            var superAdmin = await _companyService.GetSuperAdminAsync();
+            return Ok(superAdmin);
+        }
 
         var company = await _companyService.GetMeAsync(companyId.Value);
         return Ok(company);
