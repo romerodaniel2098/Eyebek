@@ -65,6 +65,7 @@ public class AppDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Type).HasConversion<string>();
             entity.Property(x => x.Method).HasConversion<string>();
+            entity.Property(x => x.Status).HasConversion<string>();
         });
 
         // sessions

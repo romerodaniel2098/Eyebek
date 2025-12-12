@@ -23,9 +23,31 @@ public class AttendanceService : IAttendanceService
             Method = request.Method,
             Confidence = request.Confidence,
             CapturePhoto = request.CapturePhoto,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
+            Status = request.Status,
             CreatedAt = DateTime.UtcNow
         };
 
         await _attendanceRepository.AddAsync(attendance);
     }
+
+    public async Task<List<AttendanceListItemDto>> GetByCompanyAsync(int companyId)
+    {
+        var attendances = await _attendanceRepository.GetByCompanyAsync(companyId);
+        return attendances.Select(Map).ToList();
+    }
+
+    private static AttendanceListItemDto Map(Attendance a) => new()
+    {
+        Id = a.Id,
+        UserId = a.UserId,
+        UserName = a.User.Name,
+        Timestamp = a.Timestamp,
+        Type = a.Type,
+        Method = a.Method,
+        Status = a.Status,
+        Confidence = a.Confidence,
+        CapturePhoto = a.CapturePhoto
+    };
 }

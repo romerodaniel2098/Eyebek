@@ -25,13 +25,12 @@ public class PaymentsController : ControllerBase
         if (companyId == null)
             return Unauthorized("No se encontró la empresa en el token.");
         
-        await Task.CompletedTask;
+        await _paymentService.CreateAndApplyPlanAsync(companyId.Value, request);
 
         return Ok(new
         {
-            message = "Pago registrado (implementación de servicio pendiente).",
-            companyId = companyId.Value,
-            payment = request
+            message = "Pago registrado exitosamente.",
+            companyId = companyId.Value
         });
     }
 
@@ -43,16 +42,12 @@ public class PaymentsController : ControllerBase
         if (companyId == null)
             return Unauthorized("No se encontró la empresa en el token.");
 
-     
-        await Task.CompletedTask;
-
-        var emptyList = new List<object>();
+        var history = await _paymentService.HistoryAsync(companyId.Value);
 
         return Ok(new
         {
-            message = "Historial de pagos (implementación de servicio pendiente).",
             companyId = companyId.Value,
-            payments = emptyList
+            payments = history
         });
     }
 }

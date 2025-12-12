@@ -9,4 +9,6 @@ public class UserCreateRequest
     public string Email { get; set; } = default!;
     public string Phone { get; set; } = default!;
     public UserRole Role { get; set; } = UserRole.Employee;
+    public string? Photo { get; set; }
+    public byte[]? FacialEmbedding { get; set; }
 }

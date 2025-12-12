@@ -30,6 +30,9 @@ public class UserService : IUserService
             Document    = request.Document,
             Role        = request.Role,
             Status      = UserStatus.Active,
+            Phone       = request.Phone,
+            Photo       = request.Photo,
+            FacialEmbedding = request.FacialEmbedding,
             PasswordHash = string.Empty,
             CreatedAt   = DateTime.UtcNow,
             UpdatedAt   = DateTime.UtcNow
@@ -55,6 +58,9 @@ public class UserService : IUserService
         Name   = u.Name,
         Email  = u.Email,
         Role   = u.Role,
-        Status = u.Status
+        Status = u.Status,
+        Document = u.Document,
+        Phone = u.Phone,
+        Photo = u.Photo
     };
 }

@@ -30,4 +30,15 @@ public class AttendanceController : ControllerBase
 
         return Ok(new { message = "Asistencia registrada correctamente." });
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll()
+    {
+        var companyId = HttpContext.GetCompanyId();
+        if (companyId == null)
+            return Unauthorized("No se encontró la empresa en el token.");
+
+        var data = await _attendanceService.GetByCompanyAsync(companyId.Value);
+        return Ok(data);
+    }
 }

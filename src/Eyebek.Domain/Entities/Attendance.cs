@@ -19,5 +19,7 @@ public class Attendance
     public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
 
+    public AttendanceStatus Status { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

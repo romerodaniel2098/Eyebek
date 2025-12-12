@@ -21,6 +21,8 @@ public class User
     public UserRole Role { get; set; }
     public UserStatus Status { get; set; }
     public string? Phone { get; set; }
+    public string? Photo { get; set; }
+    public byte[]? FacialEmbedding { get; set; }
 
     // Timestamps
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -9,5 +9,7 @@ public class AttendanceCreateRequest
     public AttendanceMethod Method { get; set; }   
     public decimal? Confidence { get; set; }     
     public string? CapturePhoto { get; set; }      
+    public decimal? Latitude { get; set; }
     public decimal? Longitude { get; set; }
+    public AttendanceStatus Status { get; set; }
 }
