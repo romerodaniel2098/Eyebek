@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Eyebek.Domain.Entities;
 using Eyebek.Domain.Enums;
@@ -11,35 +10,37 @@ namespace Eyebek.Infrastructure.Seed;
 
 public static class SuperAdminSeeder
 {
-    private const string SuperAdminEmail = "superadmin_company@eyebek.com";
-    private const string SuperAdminUserEmail = "superadmin@eyebek.com";
-    private const string DefaultPassword = "123456"; 
+    // 👇 Coincide con appsettings.json -> "SuperAdmin"
+    private const string SuperAdminCompanyEmail = "superadmin@eyebek.com";  
+    private const string SuperAdminUserEmail    = "superadmin@eyebek.com";   
+    private const string DefaultPassword        = "SuperAdmin123!";          
 
     public static async Task SeedAsync(AppDbContext context, ILogger logger)
     {
         try
         {
-            // 1. Ensure SuperAdmin Company exists
-            var company = await context.Companies.FirstOrDefaultAsync(c => c.Email == SuperAdminEmail);
-            bool companyCreated = false;
+            // 1. Empresa SuperAdmin
+            var company = await context.Companies
+                .FirstOrDefaultAsync(c => c.Email == SuperAdminCompanyEmail);
+            var companyCreated = false;
 
             if (company == null)
             {
-                // Find ENTERPRISE plan or fallback to any plan/null
-                var enterprisePlan = await context.Plans.FirstOrDefaultAsync(p => p.Category == "ENTERPRISE");
-                
+                var enterprisePlan = await context.Plans
+                    .FirstOrDefaultAsync(p => p.Category == "ENTERPRISE");
+
                 company = new Company
                 {
-                    Name = "Eyebek SuperAdmin",
+                    Name = "Super Administrador",
                     Phone = "+0000000000",
-                    Email = SuperAdminEmail,
+                    Email = SuperAdminCompanyEmail,
                     Address = "HQ",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword), // Access credentials for company level if needed
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword),
                     Status = CompanyStatus.Activo,
                     CurrentUsers = 0,
-                    PlanId = enterprisePlan?.Id, // Might be null if seeding failed differently, but assuming plans seeded
+                    PlanId = enterprisePlan?.Id,
                     PlanStartDate = DateTime.UtcNow,
-                    PlanEndDate = DateTime.UtcNow.AddYears(100), // "Quemado" / infinite
+                    PlanEndDate = DateTime.UtcNow.AddYears(100),
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 };
@@ -47,22 +48,24 @@ public static class SuperAdminSeeder
                 await context.Companies.AddAsync(company);
                 await context.SaveChangesAsync();
                 companyCreated = true;
-                logger.LogInformation("SuperAdmin Company created.");
+
+                logger.LogInformation("SuperAdmin company creada con email {Email}", SuperAdminCompanyEmail);
             }
 
-            // 2. Ensure SuperAdmin User exists within that company
-            var user = await context.Users.FirstOrDefaultAsync(u => u.Email == SuperAdminUserEmail);
+            // 2. Usuario SuperAdmin dentro de esa empresa
+            var user = await context.Users
+                .FirstOrDefaultAsync(u => u.Email == SuperAdminUserEmail);
 
             if (user == null)
             {
                 user = new User
                 {
-                    CompanyId = company.Id, 
-                    Name = "Super Admin User",
+                    CompanyId = company.Id,
+                    Name = "Super Administrador",
                     Email = SuperAdminUserEmail,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(DefaultPassword),
                     Document = "00000000",
-                    Role = UserRole.SuperAdmin, // Uses the new Enum value
+                    Role = UserRole.SuperAdmin,   // asegúrate de tener este valor en el enum
                     Status = UserStatus.Active,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -70,32 +73,20 @@ public static class SuperAdminSeeder
 
                 await context.Users.AddAsync(user);
                 await context.SaveChangesAsync();
-                
-                // Update company user count if we just added one and it wasn't tracked
-                if (!companyCreated) 
-                {
-                    // If we just created the company, count is 0, adding user makes it 1. 
-                    // But if company existed and user didn't, we increment.
-                    // Doing a raw count is safer to stay in sync.
-                    var count = await context.Users.CountAsync(u => u.CompanyId == company.Id);
-                    company.CurrentUsers = count;
-                    context.Companies.Update(company);
-                    await context.SaveChangesAsync();
-                }
-                else
-                {
-                    company.CurrentUsers = 1;
-                    context.Companies.Update(company);
-                    await context.SaveChangesAsync();
-                }
 
-                logger.LogInformation("SuperAdmin User created.");
+                // Actualizar contador de usuarios de la empresa
+                var count = await context.Users.CountAsync(u => u.CompanyId == company.Id);
+                company.CurrentUsers = count;
+                context.Companies.Update(company);
+                await context.SaveChangesAsync();
+
+                logger.LogInformation("SuperAdmin user creado con email {Email}", SuperAdminUserEmail);
             }
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error seeding SuperAdmin.");
-            throw; 
+            throw;
         }
     }
 }

@@ -99,12 +99,14 @@ public class CompanyService : ICompanyService
 
     public async Task<CompanyMeResponse> GetSuperAdminAsync()
     {
-        var company = await _companies.GetByEmailAsync("superadmin_company@eyebek.com");
+        // 👇 Debe coincidir con SuperAdminCompanyEmail del Seeder
+        var company = await _companies.GetByEmailAsync("superadmin@eyebek.com");
         if (company == null)
             throw new Exception("SuperAdmin company not found. Please run seed.");
 
         return MapMe(company);
     }
+
 
     public async Task<CompanyMeResponse> UpdateMeAsync(int companyId, CompanyUpdateRequest request)
     {
