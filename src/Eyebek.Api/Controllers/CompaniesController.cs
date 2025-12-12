@@ -24,8 +24,18 @@ public class CompaniesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] CompanyRegisterRequest request)
     {
-        var company = await _companyService.RegisterAsync(request);
-        return Ok(company);
+        try
+        {
+            var company = await _companyService.RegisterAsync(request);
+            return Ok(company);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
     /// <summary>
@@ -35,21 +45,30 @@ public class CompaniesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] CompanyLoginRequest request)
     {
-        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var userAgent = Request.Headers.UserAgent.ToString();
-
-        var (token, company) = await _companyService.LoginAsync(request, ip, userAgent);
-
-        return Ok(new
+        try
         {
-            token,
-            company
-        });
+            var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = Request.Headers.UserAgent.ToString();
+
+            var (token, company) = await _companyService.LoginAsync(request, ip, userAgent);
+
+            return Ok(new
+            {
+                token,
+                company
+            });
+        }
+        catch (Exception ex)
+        {
+            // Aquí ya NO tendrás 204/500 sin cuerpo,
+            // Swagger te mostrará el mensaje.
+            return Unauthorized(new
+            {
+                message = ex.Message
+            });
+        }
     }
 
-    /// <summary>
-    /// Datos de la empresa autenticada.
-    /// </summary>
     /// <summary>
     /// Datos de la empresa autenticada (o SuperAdmin por defecto si no hay token).
     /// </summary>
@@ -57,11 +76,12 @@ public class CompaniesController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Me()
     {
+        // Si viene token, se usa la empresa del token
         var companyId = HttpContext.GetCompanyId();
-        
+
         if (companyId == null)
         {
-            // Fallback: SuperAdmin por defecto
+            // Si NO hay token, devolvemos el SuperAdmin "quemado"
             var superAdmin = await _companyService.GetSuperAdminAsync();
             return Ok(superAdmin);
         }
@@ -79,7 +99,7 @@ public class CompaniesController : ControllerBase
     {
         var companyId = HttpContext.GetCompanyId();
         if (companyId == null)
-            return Unauthorized("No se encontró la empresa en el token.");
+            return Unauthorized(new { message = "No se encontró la empresa en el token." });
 
         var company = await _companyService.UpdateMeAsync(companyId.Value, request);
         return Ok(company);
